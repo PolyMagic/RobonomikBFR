@@ -4,11 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
@@ -25,18 +27,34 @@ import android.view.MenuItem
 
 
 import kotlinx.android.synthetic.main.content_main.text02
-import kotlinx.android.synthetic.main.app_bar_main.send_button
+
+
+import kotlinx.android.synthetic.main.content_main.satellites_view
+import kotlinx.android.synthetic.main.content_main.accuracy_view
+
+import kotlinx.android.synthetic.main.app_bar_main.stop_button
+import kotlinx.android.synthetic.main.app_bar_main.flash_button
+import kotlinx.android.synthetic.main.app_bar_main.GPS_button
+
+
 import kotlinx.android.synthetic.main.content_main.map_link
+import kotlinx.android.synthetic.main.content_main.joystic
+
+import com.erz.joysticklibrary.JoyStick
+import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val mContext = this@MainActivity
+    private var mLocationManager : LocationManager? = null
 
     var locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             val lat = location.latitude
             val lon = location.longitude
 
+            satellites_view.text = location.getExtras().getInt("satellites").toString()
+            accuracy_view.text = location.accuracy.toString()
             val test = convert(lat,lon)
 
             text02.text = test
@@ -67,29 +85,74 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
 
-        // Open Google Maps Link
-        send_button.setOnClickListener {
-            val i = Intent(Intent.ACTION_VIEW)
-            i.setData(Uri.parse(map_link.text.toString()))
-            startActivity(i)
+        val defautlButtonBG = GPS_button.background
+        var coloredButtonBG : Drawable
+        if (Build.VERSION.SDK_INT>20) {
+            coloredButtonBG = getDrawable(R.drawable.abc_btn_colored_material)
+        }
+        else{
+            coloredButtonBG = mContext.resources.getDrawable(R.drawable.abc_btn_colored_material)
         }
 
 
-        val gpsStartBtn = findViewById<View>(R.id.fab) as FloatingActionButton
+
         // GPS Request Permissions
-        gpsStartBtn.setOnClickListener {
+        GPS_button.setOnClickListener {
             val permList = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
             ActivityCompat.requestPermissions(mContext, permList , 112)
+
+            setBtnColor(GPS_button.isChecked,defautlButtonBG,coloredButtonBG,GPS_button)
+
         }
 
+        flash_button.setOnClickListener{
+            setBtnColor(flash_button.isChecked,defautlButtonBG,coloredButtonBG,flash_button)
+        }
+
+        // Stops Robot
+        stop_button.setOnClickListener {
+            //            val i = Intent(Intent.ACTION_VIEW)
+            //i.setData(Uri.parse(map_link.text.toString()))
+            //startActivity(i)
+
+
+            if (mLocationManager!=null){
+                mLocationManager?.removeUpdates(locationListener)
+                text02.text = "Robot Stoped"
+                map_link.text = ""
+            }
+
+        }
+
+
+        joystic.setListener(object : JoyStick.JoyStickListener {
+            override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
+                text02.text = (angle*60).toString()
+            }
+            override fun onTap(){}
+            override fun onDoubleTap(){}
+        })
 
     }
 
+    fun setBtnColor(state:Boolean,defautlButtonBG:Drawable,coloredButtonBG:Drawable,btn:View){
+        if (Build.VERSION.SDK_INT>15) {
+            if(state){
+                btn.background = coloredButtonBG
+            }
+            else {
+                btn.background = defautlButtonBG
+            }
+
+        }
+    }
+
+
     override fun onRequestPermissionsResult(requestCode: Int, permisions: Array<String>, grantResults: IntArray) {
-        val mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
+            mLocationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
 
             text02.text = "GPS Listening..."
 

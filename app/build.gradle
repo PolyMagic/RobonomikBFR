@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.example.poly.firsttest"
+        applicationId "com.robonomik.poly.bfr"
         minSdkVersion 15
         targetSdkVersion 28
         versionCode 1
@@ -30,6 +30,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.android.gms:play-services-maps:16.0.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    implementation 'com.github.erz05:JoyStick:1.1.0'
+
     apply plugin: 'kotlin-android-extensions'
 }
 repositories {
