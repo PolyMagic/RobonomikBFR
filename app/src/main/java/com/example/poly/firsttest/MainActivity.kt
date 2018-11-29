@@ -1,6 +1,10 @@
 package com.example.poly.firsttest
 
 import android.Manifest
+import android.bluetooth.*
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -41,12 +45,14 @@ import kotlinx.android.synthetic.main.content_main.map_link
 import kotlinx.android.synthetic.main.content_main.joystic
 
 import com.erz.joysticklibrary.JoyStick
+import com.example.poly.firsttest.bt.BtModule
 import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-    private val mContext = this@MainActivity
+    val mContext = this@MainActivity
     private var mLocationManager : LocationManager? = null
+
 
     var locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
@@ -86,13 +92,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         val defautlButtonBG = GPS_button.background
-        var coloredButtonBG : Drawable
-        if (Build.VERSION.SDK_INT>20) {
-            coloredButtonBG = getDrawable(R.drawable.abc_btn_colored_material)
-        }
-        else{
-            coloredButtonBG = mContext.resources.getDrawable(R.drawable.abc_btn_colored_material)
-        }
+        var coloredButtonBG = getDrawable(R.drawable.abc_btn_colored_material)
+
 
 
 
@@ -125,18 +126,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
 
+        var mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        var bluetoothLeScanner = mBluetoothAdapter.bluetoothLeScanner
+
+        println("=P= Init")
+        bluetoothLeScanner.startScan( BtModule.BtScanerCallback(this@MainActivity,bluetoothLeScanner))
+
         joystic.setListener(object : JoyStick.JoyStickListener {
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
             }
-            override fun onTap(){}
+            override fun onTap(){
+
+            }
             override fun onDoubleTap(){}
         })
 
+
+
+
     }
 
+
+
     fun setBtnColor(state:Boolean,defautlButtonBG:Drawable,coloredButtonBG:Drawable,btn:View){
-        if (Build.VERSION.SDK_INT>15) {
+
             if(state){
                 btn.background = coloredButtonBG
             }
@@ -144,7 +158,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 btn.background = defautlButtonBG
             }
 
-        }
+
     }
 
 
