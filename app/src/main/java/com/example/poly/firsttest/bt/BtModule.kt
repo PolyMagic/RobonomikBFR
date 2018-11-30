@@ -14,6 +14,9 @@ import android.bluetooth.BluetoothGattService
 
 
 class BtModule{
+
+
+
     class BtScanerCallback(var parent : MainActivity, var bluetoothLeScanner: BluetoothLeScanner) : ScanCallback(){
         var found = false
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
@@ -53,19 +56,20 @@ class BtModule{
                     for (gattService in gatt.services) {
 
                         for (characteristic in gattService.characteristics) {
+                            println("=P= ${characteristic.uuid}")
+                            if (characteristic.uuid.toString() == "0000ffe1-0000-1000-8000-00805f9b34fb") {
 
-                            if (characteristic.uuid.toString() == "0000ffe9-0000-1000-8000-00805f9b34fb") {
+                                Log.w("=P=", "found arduino")
 
-                                Log.w("=P=", "onServicesDiscovered: found LED")
-
-                                val originalString = "560D0F0600F0AA"
-
-
-
-                                characteristic.setValue(originalString) // call this BEFORE(!) you 'write' any stuff to the server
+//                                val originalString = "560D0F0600F0AA"
+//
+//
+                                parent.btGattConnection = gatt
+                                parent.btGattCharacteristic = characteristic
+//
+                                characteristic.setValue("=R= Connected")
                                 gatt.writeCharacteristic(characteristic)
 
-                                Log.i("=P=", "onServicesDiscovered: , write bytes?! ")
                             }
                         }
                     }

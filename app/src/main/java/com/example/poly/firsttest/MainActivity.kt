@@ -51,6 +51,8 @@ import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     val mContext = this@MainActivity
+    var btGattConnection : BluetoothGatt? = null
+    var btGattCharacteristic : BluetoothGattCharacteristic? = null
     private var mLocationManager : LocationManager? = null
 
 
@@ -135,6 +137,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         joystic.setListener(object : JoyStick.JoyStickListener {
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
+
+                if(btGattConnection!=null){
+                    btGattCharacteristic?.setValue("${angle} \n")
+                    btGattConnection?.writeCharacteristic(btGattCharacteristic)
+
+                }
+
             }
             override fun onTap(){
 
