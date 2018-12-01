@@ -17,6 +17,7 @@ import android.net.Uri
 import android.os.Build
 
 import android.os.Bundle
+import android.provider.Settings
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.ActivityCompat
 import android.view.View
@@ -28,6 +29,7 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 
 
 import kotlinx.android.synthetic.main.content_main.text02
@@ -74,6 +76,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onProviderDisabled(provider: String) {}
     }
 
+    fun turnGPSOn(){
+        val provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+
+        if(!provider.contains("gps")){ //if gps is disabled
+            val poke = Intent();
+            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+            poke.setData(Uri.parse("3"));
+            sendBroadcast(poke);
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -96,13 +111,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val defautlButtonBG = GPS_button.background
         var coloredButtonBG = getDrawable(R.drawable.abc_btn_colored_material)
 
+        val permList = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+        ActivityCompat.requestPermissions(mContext, permList , 112)
 
-
-
+        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         // GPS Request Permissions
         GPS_button.setOnClickListener {
-            val permList = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
-            ActivityCompat.requestPermissions(mContext, permList , 112)
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                mLocationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
+
+                text02.text = "GPS Listening..."
+
+            }
 
             setBtnColor(GPS_button.isChecked,defautlButtonBG,coloredButtonBG,GPS_button)
 
@@ -132,16 +154,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         var bluetoothLeScanner = mBluetoothAdapter.bluetoothLeScanner
 
         println("=P= Init")
-        bluetoothLeScanner.startScan( BtModule.BtScanerCallback(this@MainActivity,bluetoothLeScanner))
+
+        if(mBluetoothAdapter.isEnabled){
+
+            if(mLocationManager!=null) {
+                if (mLocationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    bluetoothLeScanner.startScan(BtModule.BtScanerCallback(this@MainActivity, bluetoothLeScanner))
+                }else{
+                    val toast = Toast.makeText(applicationContext, "Gps disabled!!!", Toast.LENGTH_LONG)
+                    toast.show()
+                }
+
+
+            }
+
+
+        }else{
+            mBluetoothAdapter.enable()
+        }
+
 
         joystic.setListener(object : JoyStick.JoyStickListener {
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
 
                 if(btGattConnection!=null){
-                    btGattCharacteristic?.setValue("${angle} \n")
+                    btGattCharacteristic?.setValue("P ${power.roundToInt()} \n")
                     btGattConnection?.writeCharacteristic(btGattCharacteristic)
-
                 }
 
             }
@@ -172,14 +211,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permisions: Array<String>, grantResults: IntArray) {
-        mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            mLocationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
-
-            text02.text = "GPS Listening..."
-
-        }
+        turnGPSOn()
     }
 
     override fun onBackPressed() {

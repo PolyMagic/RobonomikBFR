@@ -19,6 +19,7 @@ class BtModule{
 
     class BtScanerCallback(var parent : MainActivity, var bluetoothLeScanner: BluetoothLeScanner) : ScanCallback(){
         var found = false
+
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             println("=P= Found: ${result?.device?.name} : ${result?.device?.address}")
 
