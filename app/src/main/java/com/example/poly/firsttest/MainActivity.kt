@@ -178,8 +178,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
 
-                if(btGattConnection!=null){
-                    btGattCharacteristic?.setValue("P ${power.roundToInt()} \n")
+                if(btGattConnection!=null) {
+                    btGattCharacteristic?.setValue("P ${power.roundToInt()} \n" + "D ${direction} \n")
                     btGattConnection?.writeCharacteristic(btGattCharacteristic)
                 }
 

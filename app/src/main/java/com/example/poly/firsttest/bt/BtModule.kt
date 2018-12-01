@@ -28,8 +28,8 @@ class BtModule{
                 bluetoothLeScanner.stopScan(this)
                 result?.device?.connectGatt( parent.mContext ,true,mGattCallback)
             }
-            super.onScanResult(callbackType, result)
-        }
+            super.onScanResult(callbackType, result)        }
+
 
         override fun onScanFailed(errorCode: Int) {
             println("=P= fail")
