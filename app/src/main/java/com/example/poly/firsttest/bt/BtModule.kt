@@ -9,8 +9,6 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.util.Log
 import com.example.poly.firsttest.MainActivity
-import android.bluetooth.BluetoothGattService
-
 
 
 class BtModule{
@@ -41,6 +39,7 @@ class BtModule{
                 when (newState) {
                     BluetoothProfile.STATE_CONNECTED -> {
                         println("=P= Connected")
+
                         gatt.discoverServices()
                     }
                     BluetoothProfile.STATE_DISCONNECTED -> {
@@ -62,6 +61,8 @@ class BtModule{
 
                                 Log.w("=P=", "found arduino")
 
+
+
 //                                val originalString = "560D0F0600F0AA"
 //
 //
@@ -70,6 +71,9 @@ class BtModule{
 //
                                 characteristic.setValue("=R= Connected")
                                 gatt.writeCharacteristic(characteristic)
+
+
+                                parent.btConnected()
 
                             }
                         }

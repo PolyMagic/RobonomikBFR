@@ -2,9 +2,6 @@ package com.example.poly.firsttest
 
 import android.Manifest
 import android.bluetooth.*
-import android.bluetooth.le.BluetoothLeScanner
-import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,11 +11,9 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 
 import android.os.Bundle
 import android.provider.Settings
-import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.ActivityCompat
 import android.view.View
 import android.support.design.widget.NavigationView
@@ -38,13 +33,17 @@ import kotlinx.android.synthetic.main.content_main.text02
 import kotlinx.android.synthetic.main.content_main.satellites_view
 import kotlinx.android.synthetic.main.content_main.accuracy_view
 
-import kotlinx.android.synthetic.main.app_bar_main.stop_button
-import kotlinx.android.synthetic.main.app_bar_main.flash_button
-import kotlinx.android.synthetic.main.app_bar_main.GPS_button
+import kotlinx.android.synthetic.main.content_main.stop_button
+import kotlinx.android.synthetic.main.content_main.flash_button
+import kotlinx.android.synthetic.main.content_main.GPS_button
 
 
 import kotlinx.android.synthetic.main.content_main.map_link
 import kotlinx.android.synthetic.main.content_main.joystic
+
+import kotlinx.android.synthetic.main.app_bar_main.inc_id
+import kotlinx.android.synthetic.main.app_bar_main.progressBar1
+
 
 import com.erz.joysticklibrary.JoyStick
 import com.example.poly.firsttest.bt.BtModule
@@ -76,6 +75,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onProviderDisabled(provider: String) {}
     }
 
+    fun btConnected(){
+        runOnUiThread {
+            inc_id.visibility = View.VISIBLE
+            progressBar1.visibility = View.GONE
+
+        }
+
+    }
+
     fun turnGPSOn(){
         val provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
 
@@ -92,6 +100,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        inc_id.visibility = View.GONE
+        progressBar1.visibility = View.VISIBLE
 
         // Create Toolbar
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
@@ -175,8 +186,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         joystic.setListener(object : JoyStick.JoyStickListener {
+//            var lastPower : Double = 0;
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
+
+//                if(  Math.abs(lastPower-power) > 0.01 ){
+//
+//                }
+//
+//                lastPower = power
 
                 if(btGattConnection!=null) {
                     btGattCharacteristic?.setValue("P ${power.roundToInt()} \n" + "D ${direction} \n")

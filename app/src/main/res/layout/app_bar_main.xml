@@ -37,34 +37,22 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
-
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content" android:layout_gravity="center" android:id="@+id/progressBar1"
+            android:visibility="gone">
+        <ProgressBar
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true" android:layout_gravity="center"/>
+        <TextView
+                android:text="Paring with robot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/textView2"
+                android:layout_gravity="center_vertical|center_horizontal|center" android:gravity="center"/>
     </LinearLayout>
-    <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_gravity="bottom">
-        <Button
-                android:text="Stop"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:id="@+id/stop_button" android:layout_weight="1"
-                style="@style/Widget.AppCompat.Button.Colored" android:drawableLeft="@drawable/ic_close"
-                android:foreground="?attr/selectableItemBackground"/>
-        <ToggleButton
-                android:text="ToggleButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:id="@+id/flash_button" android:layout_weight="1"
-                android:drawableLeft="@drawable/ic_highlight" style="@style/Base.Widget.AppCompat.Button"/>
-        <ToggleButton
-                android:text="GPS"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:id="@+id/GPS_button" android:layout_weight="1"
-                android:drawableLeft="@drawable/ic_gps_fixed" style="@style/Base.Widget.AppCompat.Button"
-                android:checked="false"/>
-    </LinearLayout>
+    <include layout="@layout/content_main" android:id="@+id/inc_id" android:visibility="visible"/>
 
 </android.support.design.widget.CoordinatorLayout>
