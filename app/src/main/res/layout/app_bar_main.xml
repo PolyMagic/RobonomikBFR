@@ -52,6 +52,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:id="@+id/textView2"
                 android:layout_gravity="center_vertical|center_horizontal|center" android:gravity="center"/>
+        <TextView
+                android:text="Turn on bt and wifi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/textView3" android:gravity="center"/>
     </LinearLayout>
     <include layout="@layout/content_main" android:id="@+id/inc_id" android:visibility="visible"/>
 
