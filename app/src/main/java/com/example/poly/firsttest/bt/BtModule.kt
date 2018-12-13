@@ -26,7 +26,8 @@ class BtModule{
                 bluetoothLeScanner.stopScan(this)
                 result?.device?.connectGatt( parent.mContext ,true,mGattCallback)
             }
-            super.onScanResult(callbackType, result)        }
+            super.onScanResult(callbackType, result)
+        }
 
 
         override fun onScanFailed(errorCode: Int) {
@@ -61,19 +62,11 @@ class BtModule{
 
                                 Log.w("=P=", "found arduino")
 
-
-
-//                                val originalString = "560D0F0600F0AA"
-//
-//
-                                parent.btGattConnection = gatt
-                                parent.btGattCharacteristic = characteristic
-//
-                                characteristic.setValue("=R= Connected")
+                                characteristic.setValue("C Connected")
                                 gatt.writeCharacteristic(characteristic)
 
 
-                                parent.btConnected()
+                                parent.btConnected(gatt,characteristic)
 
                             }
                         }

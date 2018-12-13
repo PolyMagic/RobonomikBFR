@@ -68,14 +68,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             text02.text = test
             map_link.text = "https://www.google.pl/maps/place/" + test
-        }
 
+            if(btGattConnection!=null) {
+                // TODO Send GPS location to arduino
+            }
+        }
         override fun onProviderEnabled(provider: String) {}
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
         override fun onProviderDisabled(provider: String) {}
     }
 
-    fun btConnected(){
+
+    // Callback for BtModule
+    // Called when Gatt and GattCharacteristic are found by BtModule
+    fun btConnected(gatt : BluetoothGatt,characteristic : BluetoothGattCharacteristic){
+
+        btGattConnection = gatt
+        btGattCharacteristic = characteristic
+
         runOnUiThread {
             inc_id.visibility = View.VISIBLE
             progressBar1.visibility = View.GONE
@@ -83,19 +93,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
     }
-
-    fun turnGPSOn(){
-        val provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-
-        if(!provider.contains("gps")){ //if gps is disabled
-            val poke = Intent();
-            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
-            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
-            poke.setData(Uri.parse("3"));
-            sendBroadcast(poke);
-        }
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,43 +119,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val defautlButtonBG = GPS_button.background
         var coloredButtonBG = getDrawable(R.drawable.abc_btn_colored_material)
 
+
+
+        // Request GPS Perisions
         val permList = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
         ActivityCompat.requestPermissions(mContext, permList , 112)
+        //
 
         mLocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        // GPS Request Permissions
-        GPS_button.setOnClickListener {
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-                mLocationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
-
-                text02.text = "GPS Listening..."
-
-            }
-
-            setBtnColor(GPS_button.isChecked,defautlButtonBG,coloredButtonBG,GPS_button)
-
-        }
-
-        flash_button.setOnClickListener{
-            setBtnColor(flash_button.isChecked,defautlButtonBG,coloredButtonBG,flash_button)
-        }
-
-        // Stops Robot
-        stop_button.setOnClickListener {
-            //            val i = Intent(Intent.ACTION_VIEW)
-            //i.setData(Uri.parse(map_link.text.toString()))
-            //startActivity(i)
-
-
-            if (mLocationManager!=null){
-                mLocationManager?.removeUpdates(locationListener)
-                text02.text = "Robot Stoped"
-                map_link.text = ""
-            }
-
-        }
 
 
         var mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -167,71 +135,84 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         println("=P= Init")
 
         if(mBluetoothAdapter.isEnabled){
-
             if(mLocationManager!=null) {
                 if (mLocationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    // Start BLE Scan
                     bluetoothLeScanner.startScan(BtModule.BtScanerCallback(this@MainActivity, bluetoothLeScanner))
                 }else{
-                    val toast = Toast.makeText(applicationContext, "Gps disabled!!!", Toast.LENGTH_LONG)
+                    // Can't Scan - gps is disabled
+                    val toast = Toast.makeText(applicationContext, "Gps is disabled!!!", Toast.LENGTH_LONG)
                     toast.show()
                 }
-
-
             }
-
-
         }else{
+            // Turn on BT
             mBluetoothAdapter.enable()
         }
 
 
+        // Start GPS Listener
+        GPS_button.setOnClickListener {
+            // Check Gps Perms
+            if (
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                ) {
+
+                mLocationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, locationListener)
+
+                text02.text = "GPS Listening..."
+
+            }
+
+            setBtnColor(GPS_button.isChecked,defautlButtonBG,coloredButtonBG,GPS_button)
+        }
+
+        // Turn On Robot Lights
+        flash_button.setOnClickListener{
+            setBtnColor(flash_button.isChecked,defautlButtonBG,coloredButtonBG,flash_button)
+
+            if( isArduinoBtConnected() ) {
+                // TODO Send Flashlight Message To Arduino
+            }
+        }
+
+        // Stop Robot
+        stop_button.setOnClickListener {
+            if (mLocationManager!=null){
+                mLocationManager?.removeUpdates(locationListener)
+                text02.text = "Robot Stoped"
+                map_link.text = ""
+            }
+
+            if( isArduinoBtConnected() ) {
+                // TODO Send Robot Stop Message
+            }
+        }
+
         joystic.setListener(object : JoyStick.JoyStickListener {
-//            var lastPower : Double = 0;
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
                 text02.text = (angle*60).toString()
 
-//                if(  Math.abs(lastPower-power) > 0.01 ){
-//
-//                }
-//
-//                lastPower = power
-
-                if(btGattConnection!=null) {
+                // Send Joystic Data To Arduino
+                if( isArduinoBtConnected() ) {
                     btGattCharacteristic?.setValue("P ${power.roundToInt()} \n" + "D ${direction} \n")
                     btGattConnection?.writeCharacteristic(btGattCharacteristic)
                 }
 
             }
-            override fun onTap(){
-
-            }
+            override fun onTap(){}
             override fun onDoubleTap(){}
         })
 
-
-
-
     }
-
-
-
-    fun setBtnColor(state:Boolean,defautlButtonBG:Drawable,coloredButtonBG:Drawable,btn:View){
-
-            if(state){
-                btn.background = coloredButtonBG
-            }
-            else {
-                btn.background = defautlButtonBG
-            }
-
-
-    }
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permisions: Array<String>, grantResults: IntArray) {
         turnGPSOn()
     }
 
+
+    // UI callbacks
     override fun onBackPressed() {
         val drawer = findViewById<View>(R.id.drawer_layout) as DrawerLayout
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -240,12 +221,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             super.onBackPressed()
         }
     }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         return if (id == R.id.action_settings) {
@@ -253,20 +232,47 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else super.onOptionsItemSelected(item)
 
     }
-
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-
         if (id == R.id.home) { }
-
         val drawer = findViewById<View>(R.id.drawer_layout) as DrawerLayout
         drawer.closeDrawer(GravityCompat.START)
         return true
     }
 
 
-
+    //
     // Utils
+    //
+
+    fun isArduinoBtConnected() : Boolean{
+        if (btGattConnection == null) return false
+        if (btGattCharacteristic == null) return false
+        return true
+    }
+
+    // Toggle btn color
+    fun setBtnColor(state:Boolean,defautlButtonBG:Drawable,coloredButtonBG:Drawable,btn:View){
+        if(state){
+            btn.background = coloredButtonBG
+        }
+        else {
+            btn.background = defautlButtonBG
+        }
+    }
+
+    // try to turn on gps
+    fun turnGPSOn(){
+        val provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED)
+
+        if(!provider.contains("gps")){ //if gps is disabled
+            val poke = Intent()
+            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider")
+            poke.addCategory(Intent.CATEGORY_ALTERNATIVE)
+            poke.setData(Uri.parse("3"))
+            sendBroadcast(poke)
+        }
+    }
 
     // Lat Long to cordinates converter for Google Maps
     private fun convert(latitude: Double, longitude: Double): String {
