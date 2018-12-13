@@ -192,7 +192,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         joystic.setListener(object : JoyStick.JoyStickListener {
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
-                text02.text = (angle*60).toString()
+
+                var dirStri = "Idle"
+
+                when(direction){
+                    JoyStick.DIRECTION_CENTER -> dirStri = "Ceneter"
+                    JoyStick.DIRECTION_LEFT -> dirStri = "Left"
+                    JoyStick.DIRECTION_RIGHT -> dirStri = "Right"
+                    JoyStick.DIRECTION_LEFT_UP -> dirStri = "Left Up"
+                    JoyStick.DIRECTION_UP_RIGHT -> dirStri = "Right Up"
+                }
+
+
+                text02.text = dirStri
 
                 // Send Joystic Data To Arduino
                 if( isArduinoBtConnected() ) {
