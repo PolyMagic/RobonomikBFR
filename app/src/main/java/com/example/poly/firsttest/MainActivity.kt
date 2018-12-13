@@ -186,7 +186,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
             if( isArduinoBtConnected() ) {
-                // TODO Send Robot Stop Message
+                // TODO Safer Send Robot Stop Message
+                btGattCharacteristic?.setValue("S 1 \n")
+                btGattConnection?.writeCharacteristic(btGattCharacteristic)
             }
         }
 
