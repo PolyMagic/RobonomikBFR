@@ -61,17 +61,45 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onLocationChanged(location: Location) {
             val lat = location.latitude
             val lon = location.longitude
+            val alti = location.altitude
 
-            satellites_view.text = location.getExtras().getInt("satellites").toString()
-            accuracy_view.text = location.accuracy.toString()
-            val test = convert(lat,lon)
+            val equatorialRadius = 6378137.0
+            val polarRadius = 6356752.314245
 
-            text02.text = test
-            map_link.text = "https://www.google.pl/maps/place/" + test
+            val latRad = lat * Math.PI / 180
+            val lonRad = lon * Math.PI / 180
 
-            if(btGattConnection!=null) {
-                // TODO Send GPS location to arduino
+            val eToSquare = 1 - Math.pow(polarRadius, 2.0) / Math.pow(equatorialRadius, 2.0)
+            val Nlati = equatorialRadius / Math.sqrt(1 - eToSquare * Math.pow(Math.sin(latRad), 2.0))
+
+//            val x = (Nlati + alti) * Math.cos(latRad) * Math.cos(lonRad)
+//            val y = (Nlati + alti) * Math.cos(latRad) * Math.sin(lonRad)
+
+
+//            satellites_view.text = location.getExtras().getInt("satellites").toString()
+//            accuracy_view.text = location.accuracy.toString()
+
+//            text02.text = test
+//            map_link.text = "https://www.google.pl/maps/place/" + test
+
+            val mode = 0
+            val x = "0000000.00000"
+            val y = "0000000.00000"
+            val lDir = "1"
+            val rDir = "1"
+            val powerL = "000"
+            val powerR = "000"
+
+
+            if( isArduinoBtConnected() ) {
+                val value = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n".toByteArray()
+                btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                btGattCharacteristic?.setValue(value)
+                btGattConnection?.writeCharacteristic(btGattCharacteristic)
             }
+//            if(btGattConnection!=null) {
+//
+//            }
         }
         override fun onProviderEnabled(provider: String) {}
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
@@ -172,8 +200,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         flash_button.setOnClickListener{
             setBtnColor(flash_button.isChecked,defautlButtonBG,coloredButtonBG,flash_button)
 
+
+            val mode = 0
+            val x = "0000000.00000"
+            val y = "0000000.00000"
+            val lDir = "1"
+            val rDir = "1"
+            val powerL = "000"
+            val powerR = "000"
+
+
             if( isArduinoBtConnected() ) {
-                // TODO Send Flashlight Message To Arduino
+                val value = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n".toByteArray()
+                btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                btGattCharacteristic?.setValue(value)
+                btGattConnection?.writeCharacteristic(btGattCharacteristic)
             }
         }
 
@@ -199,6 +240,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
                 when(direction){
                     JoyStick.DIRECTION_CENTER -> dirStri = "Ceneter"
+                    JoyStick.DIRECTION_UP -> dirStri = "Up"
+                    JoyStick.DIRECTION_DOWN -> dirStri = "Down"
                     JoyStick.DIRECTION_LEFT -> dirStri = "Left"
                     JoyStick.DIRECTION_RIGHT -> dirStri = "Right"
                     JoyStick.DIRECTION_LEFT_UP -> dirStri = "Left Up"
@@ -208,9 +251,66 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
                 text02.text = dirStri
 
+
+                var lDir = 1
+                var rDir = 1
+
+                when(direction){
+                    JoyStick.DIRECTION_CENTER -> {
+                        lDir=1
+                        rDir=1
+                    }
+                    JoyStick.DIRECTION_LEFT -> {
+                        lDir=0
+                        rDir=1
+                    }
+                    JoyStick.DIRECTION_RIGHT -> {
+                        lDir=1
+                        rDir=0
+                    }
+                    JoyStick.DIRECTION_UP_RIGHT -> {
+                        lDir=1
+                        rDir=1
+                    }
+                    JoyStick.DIRECTION_LEFT_UP->{
+                        lDir=1
+                        rDir=1
+                    }
+                    JoyStick.DIRECTION_UP -> {
+                        lDir=1
+                        rDir=1
+                    }
+                    JoyStick.DIRECTION_DOWN -> {
+                        lDir=0
+                        rDir=0
+                    }
+                    JoyStick.DIRECTION_DOWN_LEFT -> {
+                        lDir=0
+                        rDir=0
+                    }
+                    JoyStick.DIRECTION_RIGHT_DOWN -> {
+                        lDir=0
+                        rDir=0
+                    }
+                }
+
+                val mode = 0
+                val x = "0000000.00000"
+                val y = "0000000.00000"
+//                val lDir = "1"
+//                val rDir = "1"
+                val powerL = power.roundToInt().map(0,100,0,255) //000
+                val powerR = power.roundToInt().map(0,100,0,255) //000
+
+
+                val fillPL =  powerL.toString().fillStart(3)
+                val fillPR =  powerR.toString().fillStart(3)
+
                 // Send Joystic Data To Arduino
                 if( isArduinoBtConnected() ) {
-                    btGattCharacteristic?.setValue("P ${power.roundToInt()} \n" + "D ${direction} \n")
+                    val value = "${mode},${x},${y},${lDir},${rDir},${fillPL},${fillPR}\n".toByteArray()
+                    btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    btGattCharacteristic?.setValue(value)
                     btGattConnection?.writeCharacteristic(btGattCharacteristic)
                 }
 
@@ -288,44 +388,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-    // Lat Long to cordinates converter for Google Maps
-    private fun convert(latitude: Double, longitude: Double): String {
-        val builder = StringBuilder()
+    fun Int.map( start1:Int, stop1:Int, start2:Int, stop2:Int):Int{
+        val a : Double = (this - start1.toDouble()) / (stop1 - start1) * (stop2 - start2) + start2
+        return a.roundToInt()
+    }
 
-
-        val latitudeDegrees = Location.convert(Math.abs(latitude), Location.FORMAT_SECONDS)
-        val latitudeSplit = latitudeDegrees.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        builder.append(latitudeSplit[0])
-        builder.append("°")
-        builder.append(latitudeSplit[1])
-        builder.append("'")
-        builder.append(latitudeSplit[2])
-        builder.append("\"")
-        if (latitude < 0) {
-            builder.append("S ")
-        } else {
-            builder.append("N ")
+    fun String.fillStart(size: Int): String {
+        var out = this
+        while (out.length < size){
+            out = "0" + out
         }
-
-
-        builder.append(" ")
-
-
-
-        val longitudeDegrees = Location.convert(Math.abs(longitude), Location.FORMAT_SECONDS)
-        val longitudeSplit = longitudeDegrees.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        builder.append(longitudeSplit[0])
-        builder.append("°")
-        builder.append(longitudeSplit[1])
-        builder.append("'")
-        builder.append(longitudeSplit[2])
-        builder.append("\"")
-        if (longitude < 0) {
-            builder.append("W ")
-        } else {
-            builder.append("E ")
-        }
-
-        return builder.toString()
+        return out
     }
 }

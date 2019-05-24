@@ -49,8 +49,8 @@
                 android:linksClickable="false" android:visibility="gone"/>
         <com.erz.joysticklibrary.JoyStick
                 android:id="@+id/joystic"
-                android:layout_width="200dp"
-                android:layout_height="200dp" app:buttonColor="@color/colorAccent"
+                android:layout_width="350dp"
+                android:layout_height="350dp" app:buttonColor="@color/colorAccent"
                 app:padColor="@color/common_google_signin_btn_text_light_disabled"/>
         <TextView
                 android:id="@+id/text02"
