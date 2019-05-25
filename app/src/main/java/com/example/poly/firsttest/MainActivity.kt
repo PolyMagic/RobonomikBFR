@@ -26,6 +26,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 
+import java.util.*
+import kotlin.concurrent.schedule
+
+
 
 import kotlinx.android.synthetic.main.content_main.text02
 
@@ -55,6 +59,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     var btGattConnection : BluetoothGatt? = null
     var btGattCharacteristic : BluetoothGattCharacteristic? = null
     private var mLocationManager : LocationManager? = null
+
+    var lastData : String = "1,0000000.00000,0000000.00000,1,1,0,0\n"
 
 
     var locationListener = object : LocationListener {
@@ -91,12 +97,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val powerR = "000"
 
 
-            if( isArduinoBtConnected() ) {
-                val value = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n".toByteArray()
-                btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                btGattCharacteristic?.setValue(value)
-                btGattConnection?.writeCharacteristic(btGattCharacteristic)
-            }
+//            if( isArduinoBtConnected() ) {
+            lastData = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n"
+//            }
 //            if(btGattConnection!=null) {
 //
 //            }
@@ -201,7 +204,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             setBtnColor(flash_button.isChecked,defautlButtonBG,coloredButtonBG,flash_button)
 
 
-            val mode = 0
+            val mode = 1
             val x = "0000000.00000"
             val y = "0000000.00000"
             val lDir = "1"
@@ -210,12 +213,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val powerR = "000"
 
 
-            if( isArduinoBtConnected() ) {
-                val value = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n".toByteArray()
-                btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                btGattCharacteristic?.setValue(value)
-                btGattConnection?.writeCharacteristic(btGattCharacteristic)
-            }
+//            if( isArduinoBtConnected() ) {
+                lastData = "${mode},${x},${y},${lDir},${rDir},${powerL},${powerR}\n"
+//            }
         }
 
         // Stop Robot
@@ -226,12 +226,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 map_link.text = ""
             }
 
-            if( isArduinoBtConnected() ) {
-                // TODO Safer Send Robot Stop Message
-                btGattCharacteristic?.setValue("S 1 \n")
-                btGattConnection?.writeCharacteristic(btGattCharacteristic)
-            }
+            lastData = "1,0000000.00000,0000000.00000,1,1,0,0\n"
         }
+
+
 
         joystic.setListener(object : JoyStick.JoyStickListener {
             override fun onMove(joyStick: JoyStick, angle: Double, power: Double, direction: Int){
@@ -294,7 +292,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     }
                 }
 
-                val mode = 0
+                if(lDir == 0) lDir = 1
+                else if (lDir ==1 ) lDir = 0
+
+                val mode = 1
                 val x = "0000000.00000"
                 val y = "0000000.00000"
 //                val lDir = "1"
@@ -307,17 +308,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val fillPR =  powerR.toString().fillStart(3)
 
                 // Send Joystic Data To Arduino
-                if( isArduinoBtConnected() ) {
-                    val value = "${mode},${x},${y},${lDir},${rDir},${fillPL},${fillPR}\n".toByteArray()
-                    btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                    btGattCharacteristic?.setValue(value)
-                    btGattConnection?.writeCharacteristic(btGattCharacteristic)
-                }
 
+                lastData = "${mode},${x},${y},${lDir},${rDir},${fillPL},${fillPR}\n"
             }
             override fun onTap(){}
             override fun onDoubleTap(){}
         })
+
+
+        Timer().schedule(200){ sendJoyData() }
 
     }
 
@@ -325,6 +324,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         turnGPSOn()
     }
 
+    fun sendJoyData(){
+        if( isArduinoBtConnected() ) {
+            btGattCharacteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            btGattCharacteristic?.setValue(lastData.toByteArray())
+            btGattConnection?.writeCharacteristic(btGattCharacteristic)
+        }
+        Timer().schedule(200) { sendJoyData() }
+    }
 
     // UI callbacks
     override fun onBackPressed() {

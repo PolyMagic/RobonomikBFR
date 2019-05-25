@@ -62,8 +62,8 @@ class BtModule{
 
                                 Log.w("=P=", "found arduino")
 
-                                characteristic.setValue("C Connected")
-                                gatt.writeCharacteristic(characteristic)
+//                                characteristic.setValue("C Connected")
+//                                gatt.writeCharacteristic(characteristic)
 
 
                                 parent.btConnected(gatt,characteristic)
